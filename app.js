@@ -143,6 +143,30 @@ var UIController = (function() {
     expensesPercLabel: ".item__percentage"
   };
 
+  var formatNumber = function(num, type) {
+    /* + or - before number
+    exactly 2 decimal points
+    comma seperating the thousands
+    2310.2345 -> + 2,310.24
+    */
+
+    num = Math.abs(num);
+    num = num.toFixed(2); //rounds the number to two decimal points. Even if there are no decimals. 234 = 234.00
+
+    numSplit = num.split(".");
+
+    int = numSplit[0]; //int is the numbers before the decimal point
+
+    if (int.length > 3) {
+      int = int.substr(0, int.length - 3) + "," + int.substr(int.length - 3, 3);
+      ///input 2310 = 2,310
+    }
+
+    dec = numSplit[1]; //dec is the numbers after the decimal point
+
+    return (type === "exp" ? "-" : "+") + " " + int + "." + dec;
+  };
+
   return {
     getinput: function() {
       return {
@@ -166,7 +190,7 @@ var UIController = (function() {
       //replace placeholder tags with actual data
       newHtml = html.replace("%id%", obj.id);
       newHtml = newHtml.replace("%description%", obj.description);
-      newHtml = newHtml.replace("%value%", obj.value);
+      newHtml = newHtml.replace("%value%", formatNumber(obj.value, type));
 
       //insert the html into the dom
       document.querySelector(element).insertAdjacentHTML("beforeend", newHtml);
@@ -192,10 +216,18 @@ var UIController = (function() {
     },
 
     displayBudget: function(obj) {
-      document.querySelector(DOMstrings.budgetLabel).textContent = obj.budget;
-      document.querySelector(DOMstrings.incomeLabel).textContent = obj.totalInc;
-      document.querySelector(DOMstrings.expensesLabel).textContent =
-        obj.totatExp;
+      obj.budget > 0 ? (type = "inc") : (type = "exp");
+      document.querySelector(DOMstrings.budgetLabel).textContent = formatNumber(
+        obj.budget,
+        type
+      );
+      document.querySelector(DOMstrings.incomeLabel).textContent = formatNumber(
+        obj.totalInc,
+        "inc"
+      );
+      document.querySelector(
+        DOMstrings.expensesLabel
+      ).textContent = formatNumber(obj.totatExp, "exp");
 
       if (obj.percentage > 0) {
         document.querySelector(DOMstrings.percentageLabel).textContent =
@@ -258,7 +290,7 @@ var controller = (function(budgetCtrl, UICtrl) {
     budgetCtrl.calculatePercentages();
     //2. Read percentages from the budget controller
     percentages = budgetCtrl.getPercentages();
-    console.log(percentages);
+    //console.log(percentages);
     //3. Update the uI with the new percentages
     UIController.displayPercentages(percentages);
   };
